@@ -23,7 +23,7 @@ public class TasksService : ITasksService
                                    IdTaskType,
                                    IdAssignedTo,
                                    IdCreator
-                            FROM Task WHERE IdAssignedTo = @idMember
+                            FROM Task WHERE IdAssignedTo = @idMember OR IdCreator = @idMember ORDER BY Deadline DESC
                             """; //IdCreator = @idMember ORDER BY Deadline DESC
         List<MemberTask> memberTasks = new List<MemberTask>();
         using (SqlConnection con = new SqlConnection(_connectionString))
@@ -48,21 +48,46 @@ public class TasksService : ITasksService
                         idAssignedTo = reader.GetInt32(6),
                         idCreator = reader.GetInt32(7),
                     };
-                    // // Add project names
-                    // const string queryName = "SELECT Name FROM Project WHERE IdProject = @idProject";
-                    // using (SqlCommand cmd2 = new SqlCommand(query, con))
-                    // {
-                    //     cmd2.Parameters.AddWithValue("@idProject", newMemberTask.idProject);
-                    //     string ProjectName = (await cmd2.ExecuteScalarAsync(token))?.ToString();
-                    //     if (ProjectName == null) continue;
-                    //     newMemberTask.Name = ProjectName;
-                    // }
-                    
                     memberTasks.Add(newMemberTask);
                     
                 }
             }
+            const string queryName = "SELECT Name FROM Project WHERE IdProject = @idProject";
+            foreach (var task in memberTasks)
+            {
+                using (var cmd2 = new SqlCommand(queryName, con))
+                {
+                    cmd2.Parameters.AddWithValue("@idProject", task.idProject);
+                    var result = await cmd2.ExecuteScalarAsync(token);
+                    if (result != null) {task.Name = result.ToString();}
+                }
+            }
         }
+        
         return memberTasks;
+    }
+
+    public async Task<bool> DeleteProjectAsync(int idProject, CancellationToken token)
+    {
+        const string queryProject = "DELETE FROM Project WHERE IdProject = @idProject";
+        const string queryTasks = "DELETE FROM Task WHERE IdProject = @idProject";
+        int rowsAffected = 0;
+        using (SqlConnection con = new SqlConnection(_connectionString))
+        {
+            await con.OpenAsync(token);
+            using (SqlCommand comTasks = new SqlCommand(queryTasks, con))
+            {
+                comTasks.Parameters.AddWithValue("@idProject", idProject);
+                rowsAffected += Convert.ToInt32(await comTasks.ExecuteNonQueryAsync(token));
+            }
+            
+            using (SqlCommand comProj = new SqlCommand(queryProject, con))
+            {
+                comProj.Parameters.AddWithValue("@idProject", idProject);
+                rowsAffected += Convert.ToInt32(await comProj.ExecuteNonQueryAsync(token));
+            }
+        }
+
+        return rowsAffected > 0;
     }
 }

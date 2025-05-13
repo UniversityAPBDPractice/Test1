@@ -5,7 +5,7 @@ using Test1.Services.Abstractions;
 namespace Test1.Controllers;
 
 [ApiController]
-[Route("/api/tasks/")]
+[Route("/api/")]
 public class TasksController : ControllerBase
 {
     private ITasksService _tasksService;
@@ -19,17 +19,33 @@ public class TasksController : ControllerBase
         _teamMemberService = teamMemberService;
     }
     [HttpGet]
-    [Route("/{idMember:int}")]
+    [Route("tasks/{idMember:int}")]
     public async Task<IActionResult> GetTeamMemberAndTasksAsync([FromRoute] int idMember, CancellationToken token)
     {
-        var tasks = await _tasksService.GetTeamMemberTasksAsync(idMember, token);
-        var member = await _teamMemberService.GetMemberInfoAsync(idMember, token);
-        var memberTasks = new MemberDTO()
+        try
         {
-            Tasks = tasks,
-            TeamMember = member,
-        };
-        
-        return Ok(memberTasks);
-    } 
+            var tasks = await _tasksService.GetTeamMemberTasksAsync(idMember, token);
+            var member = await _teamMemberService.GetMemberInfoAsync(idMember, token);
+            var memberTasks = new MemberDTO()
+            {
+                Tasks = tasks,
+                TeamMember = member,
+            };
+
+            return Ok(memberTasks);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500);
+        }
+    }
+
+    [HttpDelete]
+    [Route("api/projects/{idProject:int}")]
+    public async Task<IActionResult> DeleteProjectAsync([FromRoute] int idProject, CancellationToken token)
+    {
+        bool success = await _tasksService.DeleteProjectAsync(idProject, token);
+        if (success) {return Ok(); }
+        return StatusCode(500);
+    }
 }
