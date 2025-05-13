@@ -53,7 +53,7 @@ public class TasksService : ITasksService
                     using (SqlCommand cmd2 = new SqlCommand(query, con))
                     {
                         cmd2.Parameters.AddWithValue("@idProject", newMemberTask.idProject);
-                        string ProjectName = Tawait cmd2.ExecuteNonQuery(token));
+                        string ProjectName = (await cmd2.ExecuteScalarAsync(token))?.ToString();
                         if (ProjectName == null) continue;
                         newMemberTask.Name = ProjectName;
                     }
