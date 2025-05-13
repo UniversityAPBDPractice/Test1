@@ -23,8 +23,8 @@ public class TasksService : ITasksService
                                    IdTaskType,
                                    IdAssignedTo,
                                    IdCreator
-                            FROM Task WHERE IdAssignedTo = @idMember OR IdCreator = @idMember ORDER BY Deadline DESC"
-                            """;
+                            FROM Task WHERE IdAssignedTo = @idMember
+                            """; //IdCreator = @idMember ORDER BY Deadline DESC
         List<MemberTask> memberTasks = new List<MemberTask>();
         using (SqlConnection con = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(query, con))
@@ -48,15 +48,15 @@ public class TasksService : ITasksService
                         idAssignedTo = reader.GetInt32(6),
                         idCreator = reader.GetInt32(7),
                     };
-                    // Add project names
-                    const string queryName = "SELECT Name FROM Project WHERE IdProject = @idProject";
-                    using (SqlCommand cmd2 = new SqlCommand(query, con))
-                    {
-                        cmd2.Parameters.AddWithValue("@idProject", newMemberTask.idProject);
-                        string ProjectName = (await cmd2.ExecuteScalarAsync(token))?.ToString();
-                        if (ProjectName == null) continue;
-                        newMemberTask.Name = ProjectName;
-                    }
+                    // // Add project names
+                    // const string queryName = "SELECT Name FROM Project WHERE IdProject = @idProject";
+                    // using (SqlCommand cmd2 = new SqlCommand(query, con))
+                    // {
+                    //     cmd2.Parameters.AddWithValue("@idProject", newMemberTask.idProject);
+                    //     string ProjectName = (await cmd2.ExecuteScalarAsync(token))?.ToString();
+                    //     if (ProjectName == null) continue;
+                    //     newMemberTask.Name = ProjectName;
+                    // }
                     
                     memberTasks.Add(newMemberTask);
                     
